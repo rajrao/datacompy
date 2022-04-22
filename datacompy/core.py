@@ -485,7 +485,7 @@ class Compare:
             ]
         return to_return
 
-    def all_mismatch(self):
+    def all_mismatch(self, for_display=False):
         """All rows with any columns that have a mismatch. Returns all df1 and df2 versions of the columns and join
         columns.
 
@@ -500,9 +500,15 @@ class Compare:
             if col.endswith("_match"):
                 match_list.append(col)
                 return_list.extend([col[:-6] + "_df1", col[:-6] + "_df2"])
+                
 
         mm_bool = self.intersect_rows[match_list].all(axis="columns")
-        return self.intersect_rows[~mm_bool][self.join_columns + return_list]
+        all_mismatch = self.intersect_rows[~mm_bool][self.join_columns + return_list]
+        if (for_display):
+            all_mismatch.columns = all_mismatch.columns.str.replace('_df1', ' ('+self.df1_name+')')
+            all_mismatch.columns = all_mismatch.columns.str.replace('_df2', ' ('+self.df2_name+')')
+        
+        return all_mismatch
 
     def report(self, sample_count=10, column_count=10):
         """Returns a string representation of a report.  The representation can
