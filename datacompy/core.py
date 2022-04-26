@@ -742,16 +742,25 @@ def columns_equal(
                         col_1 = col_1.str.upper()
                     if col_2.dtype.kind == "O":
                         col_2 = col_2.str.upper()
-
+                
                 if {col_1.dtype.kind, col_2.dtype.kind} == {"M", "O"}:
                     compare = compare_string_and_date_columns(col_1, col_2)
+                elif {col_1.dtype.kind, col_2.dtype.kind} == {"O", "O"}:
+                    compare = pd.Series(
+                        (col_1 == col_2) 
+                        | (col_1.isnull() & col_2.isnull())
+                        | (col_1.isnull() & col_2.str.len() == 0)
+                        | (col_1.str.len() == 0 & col_2.isnull())
+                    )
                 else:
                     compare = pd.Series(
                         (col_1 == col_2) | (col_1.isnull() & col_2.isnull())
                     )
+                    
             except:
                 # Blanket exception should just return all False
                 compare = pd.Series(False, index=col_1.index)
+                
     compare.index = col_1.index
     return compare
 
