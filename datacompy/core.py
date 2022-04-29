@@ -756,8 +756,8 @@ def columns_equal(
                     compare = pd.Series(
                         (col_1 == col_2) 
                         |(col_1.isnull() & col_2.isnull())
-                        |(col_1.fillna('').str.len() == 0 & col_2.isnull())
-                        |(col_2.fillna('').str.len() == 0 & col_1.isnull())
+                        |(col_1.str.len() == 0 & col_2.isnull())
+                        |(col_2.str.len() == 0 & col_1.isnull())
                     )
                 else:
                     compare = pd.Series(
