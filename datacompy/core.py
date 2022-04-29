@@ -270,9 +270,11 @@ class Compare:
         if ignore_spaces:
             for column in self.join_columns:
                 if self.df1[column].dtype.kind == "O":
-                    self.df1[column] = self.df1[column].str.strip()
+                    if self.df1[column].apply(lambda x: isinstance(x,str)).any():
+                        self.df1[column] = self.df1[column].str.strip()
                 if self.df2[column].dtype.kind == "O":
-                    self.df2[column] = self.df2[column].str.strip()
+                    if self.df2[column].apply(lambda x: isinstance(x,str)).any():
+                        self.df2[column] = self.df2[column].str.strip()
 
         outer_join = self.df1.merge(
             self.df2, how="outer", suffixes=("_df1", "_df2"), indicator=True, **params
@@ -733,24 +735,29 @@ def columns_equal(
             try:
                 if ignore_spaces:
                     if col_1.dtype.kind == "O":
-                        col_1 = col_1.str.strip()
+                        if col_1.apply(lambda x: isinstance(x,str)).any():
+                            col_1 = col_1.str.strip()
                     if col_2.dtype.kind == "O":
-                        col_2 = col_2.str.strip()
+                        if col_2.apply(lambda x: isinstance(x,str)).any():
+                            col_2 = col_2.str.strip()
 
                 if ignore_case:
                     if col_1.dtype.kind == "O":
-                        col_1 = col_1.str.upper()
+                        if col_1.apply(lambda x: isinstance(x,str)).any():
+                            col_1 = col_1.str.upper()
                     if col_2.dtype.kind == "O":
-                        col_2 = col_2.str.upper()
+                        if col_2.apply(lambda x: isinstance(x,str)).any():
+                            col_2 = col_2.str.upper()
                 
-                if {col_1.dtype.kind, col_2.dtype.kind} == {"M", "O"}:
+                type_dict = {col_1.dtype.kind, col_2.dtype.kind}
+                if type_dict == {"M", "O"}:
                     compare = compare_string_and_date_columns(col_1, col_2)
-                elif {col_1.dtype.kind, col_2.dtype.kind} == {"O", "O"}:
+                elif type_dict == {"O", "O"}:
                     compare = pd.Series(
                         (col_1 == col_2) 
-                        | (col_1.isnull() & col_2.isnull())
-                        | (col_1.isnull() & col_2.str.len() == 0)
-                        | (col_1.str.len() == 0 & col_2.isnull())
+                        |(col_1.isnull() & col_2.isnull())
+                        |(col_1.fillna('').str.len() == 0 & col_2.isnull())
+                        |(col_2.fillna('').str.len() == 0 & col_1.isnull())
                     )
                 else:
                     compare = pd.Series(
